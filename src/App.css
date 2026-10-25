@@ -1,0 +1,20 @@
+
+main {
+  min-height: 100vh;
+  padding: 64px;
+  background: var(--color-canvas);
+  color: var(--color-text);
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+p {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
