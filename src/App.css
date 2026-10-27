@@ -1,20 +1,8 @@
+/* AURA Custom Layered Utilities */
 
-main {
-  min-height: 100vh;
-  padding: 64px;
-  background: var(--color-canvas);
-  color: var(--color-text);
-}
-
-h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 8vw, 6rem);
-  font-weight: 400;
-  letter-spacing: -0.04em;
-}
-
-p {
-  color: var(--color-text-muted);
-  font-size: 1.1rem;
+/* Subtle smooth focus transitions */
+a, button {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
 }
