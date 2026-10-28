@@ -16,12 +16,14 @@ export const PRODUCTS = [
     materials: "Solid White Oak · Textured Oatmeal Bouclé",
     origin: "Copenhagen Atelier (Sample design)",
     image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1000&q=80",
+    cutoutImage: "/cutouts/soren-chair.png",
+    hasCutout: true,
     fallbackColor: "#EAE5DC",
     description:
       "Crafted with hand-shaped curved arms and high-density wool bouclé upholstery. Designed to anchor minimalist reading corners while preserving spatial flow.",
     spatialNotes: "Recommended placement: 45° angle to primary natural light source for soft textile contrast.",
     inStockSample: "Sample made-to-order lead time: 4–6 weeks",
-    cutoutNote: "Photographic preview card. Exact segmentation cutouts will be available in future releases."
+    cutoutNote: "Isolated transparent cutout available for 2D staging with contact shadow."
   },
   {
     id: "alabaster-coffee-table",
@@ -40,12 +42,14 @@ export const PRODUCTS = [
     materials: "Honed Roman Travertine · Natural Matte Sealant",
     origin: "Tivoli Quarry, Italy (Sample design)",
     image: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1000&q=80",
+    cutoutImage: "/cutouts/alabaster-table.png",
+    hasCutout: true,
     fallbackColor: "#E5E0D5",
     description:
       "Cut from a single quarried block of porous Roman travertine, hand-filled and honed to a soft velvety finish that captures shifting indoor natural illumination.",
     spatialNotes: "Recommended clearance: Maintain minimum 45 cm distance from sofa edge for natural walkway ergonomics.",
     inStockSample: "Sample atelier edition · 12 pieces cataloged",
-    cutoutNote: "Photographic preview card. Exact segmentation cutouts will be available in future releases."
+    cutoutNote: "Isolated transparent cutout available for 2D staging with contact shadow."
   },
   {
     id: "njord-modular-sofa",
@@ -64,12 +68,14 @@ export const PRODUCTS = [
     materials: "Belgian Unbleached Linen · Kiln-Dried European Beech",
     origin: "Antwerp Studio (Sample design)",
     image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1000&q=80",
+    cutoutImage: "/cutouts/njord-sofa.png",
+    hasCutout: true,
     fallbackColor: "#E2DCD2",
     description:
       "A quiet luxury centerpiece with layered natural feather and down cushions resting upon a low-profile recessed plinth. Calibrated for long sightlines and open-concept living.",
     spatialNotes: "Recommended scale: Anchors living rooms 18m² and larger without dominating peripheral sightlines.",
     inStockSample: "Sample custom textile options available",
-    cutoutNote: "Photographic preview card. Exact segmentation cutouts will be available in future releases."
+    cutoutNote: "Isolated transparent cutout available for 2D staging with contact shadow."
   }
 ];
 

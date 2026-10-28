@@ -22,65 +22,69 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#F5F1E9]/95 backdrop-blur-md border-b border-[#D8D2C8] transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Wordmark */}
         <div className="flex items-baseline space-x-3">
           <a
             href="#"
             onClick={(e) => {
-              if (currentView !== 'home') {
-                e.preventDefault();
-                window.location.hash = '';
+              e.preventDefault();
+              if (onScrollTo) {
+                onScrollTo(null);
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
             className="group flex items-baseline space-x-2 text-[#292923] focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
             aria-label="AURA Home"
           >
-            <span className="font-serif text-2xl sm:text-3xl font-medium tracking-[0.22em] uppercase text-[#292923]">
-              A U R A
+            <span className="font-serif text-xl sm:text-2xl font-medium tracking-[0.16em] uppercase text-[#292923]">
+              AURA
             </span>
           </a>
-          <span className="hidden md:inline-block text-xs uppercase tracking-widest text-[#4A463D] pl-3 border-l border-[#D8D2C8] font-sans font-medium">
-            Room Discovery
+          <span className="hidden sm:inline-block text-[11px] uppercase tracking-wider text-[#4A463D] pl-2.5 border-l border-[#D8D2C8] font-sans">
+            Room Planner
           </span>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8 text-sm tracking-wide text-[#292923]" aria-label="Main navigation">
+        <nav className="hidden md:flex items-center space-x-7 text-xs sm:text-sm tracking-wide text-[#292923]" aria-label="Main navigation">
           <button
             type="button"
             onClick={() => handleNavClick('curated-pieces')}
-            className="hover:text-[#62694A] transition-colors cursor-pointer py-2 text-sm tracking-wider uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
+            className="hover:text-[#62694A] transition-colors cursor-pointer py-1.5 uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
           >
-            Shop
+            Furniture
           </button>
           <button
             type="button"
             onClick={() => handleNavClick('how-it-works')}
-            className="hover:text-[#62694A] transition-colors cursor-pointer py-2 text-sm tracking-wider uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
+            className="hover:text-[#62694A] transition-colors cursor-pointer py-1.5 uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
           >
             How It Works
           </button>
           <button
             type="button"
             onClick={onStartDesigning}
-            className="hover:text-[#62694A] transition-colors cursor-pointer py-2 text-sm tracking-wider uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm flex items-center space-x-1"
+            className={`hover:text-[#62694A] transition-colors cursor-pointer py-1.5 uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm flex items-center space-x-1 ${
+              currentView === 'editor' ? 'text-[#62694A] font-semibold' : ''
+            }`}
           >
-            <span>Room Planner</span>
+            <span>Planner</span>
           </button>
           
           {/* Saved Designs trigger */}
           <button
             type="button"
             onClick={onOpenSaved}
-            className="relative flex items-center space-x-2 hover:text-[#62694A] transition-colors cursor-pointer py-2 text-sm tracking-wider uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
+            className="relative flex items-center space-x-1.5 hover:text-[#62694A] transition-colors cursor-pointer py-1.5 uppercase font-medium focus-visible:outline-2 focus-visible:outline-[#62694A] rounded-sm"
             aria-label={`Saved Designs: ${savedCount} items`}
           >
-            <Bookmark className="w-4 h-4 text-[#62694A]" />
-            <span>Saved Designs</span>
+            <Bookmark className="w-3.5 h-3.5 text-[#62694A]" />
+            <span>Saved</span>
             <span
-              className={`inline-flex items-center justify-center text-xs font-mono px-2 py-0.5 rounded border transition-colors ${
+              className={`inline-flex items-center justify-center text-[10px] font-mono px-1.5 py-0.2 rounded border transition-colors ${
                 savedCount > 0
                   ? 'bg-[#62694A] text-[#FFFDFA] border-[#62694A] font-semibold'
                   : 'bg-[#FFFDFA] text-[#4A463D] border-[#D8D2C8]'
@@ -92,14 +96,14 @@ export default function Navbar({
         </nav>
 
         {/* Right CTA / Action */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-3">
           <button
             type="button"
             onClick={onStartDesigning}
-            className="min-h-[44px] inline-flex items-center space-x-2 px-6 py-2.5 text-sm uppercase tracking-wider font-medium bg-[#62694A] hover:bg-[#4B5237] text-[#FFFDFA] transition-all duration-200 border border-[#62694A] cursor-pointer shadow-xs focus-visible:outline-2 focus-visible:outline-[#62694A]"
+            className="min-h-[40px] inline-flex items-center space-x-1.5 px-5 py-2 text-xs uppercase tracking-wider font-medium bg-[#62694A] hover:bg-[#4B5237] text-[#FFFDFA] transition-all duration-200 border border-[#62694A] cursor-pointer shadow-xs focus-visible:outline-2 focus-visible:outline-[#62694A]"
           >
-            <span>Start Designing</span>
-            <ArrowUpRight className="w-4 h-4 opacity-90" />
+            <span>Open Planner</span>
+            <ArrowUpRight className="w-3.5 h-3.5 opacity-90" />
           </button>
         </div>
 

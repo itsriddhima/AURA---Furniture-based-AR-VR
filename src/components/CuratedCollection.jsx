@@ -106,20 +106,27 @@ export default function CuratedCollection({
                     <Bookmark className="w-4 h-4 fill-current" />
                   </button>
 
-                  {/* Category Pill */}
-                  <div className="absolute bottom-3 left-3 px-3 py-1 bg-[#FFFDFA]/95 backdrop-blur-xs border border-[#D8D2C8] text-xs uppercase tracking-wider font-mono text-[#4A463D]">
-                    {product.category}
+                  {/* Category & Cutout Ready Pills */}
+                  <div className="absolute bottom-3 left-3 flex items-center space-x-1.5">
+                    <span className="px-2.5 py-0.5 bg-[#FFFDFA]/95 backdrop-blur-xs border border-[#D8D2C8] text-[11px] uppercase tracking-wider font-mono text-[#4A463D]">
+                      {product.category}
+                    </span>
+                    {product.hasCutout && (
+                      <span className="px-2 py-0.5 bg-[#62694A] text-[#FFFDFA] border border-[#62694A] text-[10px] uppercase tracking-wider font-mono">
+                        Cutout Ready
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Product Details Content */}
-                <div className="p-5 sm:p-6 space-y-4">
+                <div className="p-4 sm:p-5 space-y-3.5">
                   {/* Name and Tagline */}
                   <div>
-                    <h3 className="font-serif text-2xl text-[#292923] font-medium leading-snug group-hover:text-[#62694A] transition-colors">
+                    <h3 className="font-serif text-xl sm:text-2xl text-[#292923] font-medium leading-snug group-hover:text-[#62694A] transition-colors">
                       {product.name}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#4A463D] mt-1.5 font-normal line-clamp-2 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#4A463D] mt-1 font-normal line-clamp-2 leading-relaxed">
                       {product.tagline}
                     </p>
                   </div>

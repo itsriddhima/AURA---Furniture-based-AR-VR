@@ -15,9 +15,14 @@ export default function RoomUploadEmptyState({ onRoomImageLoaded, isLoading = fa
 
     if (!file) return;
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const fileNameLower = (file.name || '').toLowerCase();
+    const hasValidExt = validExtensions.some((ext) => fileNameLower.endsWith(ext));
+    const hasValidMime = ALLOWED_MIME_TYPES.includes(file.type);
+
+    if (!hasValidExt && !hasValidMime) {
       setErrorMessage(
-        `Unsupported file type (${file.type || 'unknown'}). Please upload a JPEG, PNG, or WebP photo.`
+        `Unsupported file type (${file.type || file.name || 'unknown'}). Please upload a JPEG, PNG, or WebP photo.`
       );
       return;
     }

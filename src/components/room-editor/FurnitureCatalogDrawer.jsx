@@ -33,12 +33,12 @@ export default function FurnitureCatalogDrawer({
       <div className="relative w-full max-w-md bg-[#FFFDFA] border-l border-[#D8D2C8] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
         
         {/* Drawer Header */}
-        <div className="p-6 border-b border-[#D8D2C8] flex items-center justify-between bg-[#F5F1E9]">
+        <div className="p-5 border-b border-[#D8D2C8] flex items-center justify-between bg-[#F5F1E9]">
           <div>
             <h2 id="catalog-drawer-title" className="font-serif text-xl sm:text-2xl text-[#292923] font-normal">
-              Atelier Catalog
+              Furniture Catalog
             </h2>
-            <p className="text-xs uppercase tracking-widest text-[#4A463D] font-mono mt-0.5">
+            <p className="text-xs uppercase tracking-wider text-[#4A463D] font-mono mt-0.5">
               Select Pieces to Stage
             </p>
           </div>
@@ -54,39 +54,48 @@ export default function FurnitureCatalogDrawer({
         </div>
 
         {/* Informational Callout (Honest UI) */}
-        <div className="p-4 bg-[#F5F1E9] border-b border-[#D8D2C8] flex items-start space-x-2.5 text-xs text-[#4A463D]">
+        <div className="p-3.5 bg-[#F5F1E9] border-b border-[#D8D2C8] flex items-start space-x-2.5 text-xs text-[#4A463D]">
           <Info className="w-4 h-4 text-[#62694A] mt-0.5 shrink-0" />
           <p className="leading-relaxed">
-            Pieces are added as 2D spatial overlays with proportional reference dimensions. You can reposition, scale, and rotate each piece on your room photo.
+            Pieces feature transparent cutouts and adjustable contact shadows to blend cleanly into your room photo without box backgrounds.
           </p>
         </div>
 
         {/* Product List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {PRODUCTS.map((product) => (
             <div
               key={product.id}
               className="p-4 bg-[#F5F1E9] border border-[#D8D2C8] hover:border-[#62694A]/70 transition-colors flex flex-col space-y-3"
             >
               <div className="flex space-x-3.5">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-24 h-24 object-cover border border-[#D8D2C8] bg-[#EAE5DC] shrink-0"
-                  loading="lazy"
-                />
+                <div className="w-24 h-24 bg-[#FFFDFA] border border-[#D8D2C8] p-1 flex items-center justify-center shrink-0">
+                  <img
+                    src={product.cutoutImage || product.image}
+                    alt={product.name}
+                    className="w-full h-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-[11px] uppercase tracking-wider text-[#62694A] font-semibold block">
-                    {product.category}
-                  </span>
-                  <h4 className="font-serif text-lg text-[#292923] truncate mt-0.5">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[11px] uppercase tracking-wider text-[#62694A] font-semibold block">
+                      {product.category}
+                    </span>
+                    {product.hasCutout && (
+                      <span className="text-[9px] uppercase font-mono px-1.5 py-0.2 bg-[#FFFDFA] border border-[#D8D2C8] text-[#62694A]">
+                        Cutout
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="font-serif text-base text-[#292923] truncate mt-0.5">
                     {product.name}
                   </h4>
-                  <p className="font-mono text-sm text-[#292923] mt-1 font-medium">
+                  <p className="font-mono text-sm text-[#292923] mt-0.5 font-medium">
                     {product.price}{' '}
                     <span className="text-xs font-normal text-[#4A463D]">(Sample)</span>
                   </p>
-                  <p className="font-mono text-xs text-[#4A463D] mt-1">
+                  <p className="font-mono text-xs text-[#4A463D] mt-0.5">
                     {product.dimensions.width} × {product.dimensions.depth}
                   </p>
                 </div>

@@ -21,6 +21,7 @@ import {
   loadRoomImageRecord,
   clearCurrentDesign
 } from '../../utils/storage';
+import { HERO_ROOM } from '../../data/products';
 
 export default function RoomEditor({
   onBackToHome,
@@ -40,9 +41,9 @@ export default function RoomEditor({
   const replaceFileInputRef = useRef(null);
   const saveTimeoutRef = useRef(null);
 
-  // Record a snapshot of the placed items for undo
-  const pushHistory = useCallback((currentItems) => {
-    setHistory((prev) => [...prev.slice(-25), JSON.parse(JSON.stringify(currentItems))]);
+  // Snapshot placed items into undo history
+  const pushHistory = useCallback((snapshot) => {
+    setHistory((prev) => [...prev.slice(-25), JSON.parse(JSON.stringify(snapshot))]);
   }, []);
 
   // Initial load from IndexedDB
@@ -59,31 +60,63 @@ export default function RoomEditor({
 
         if (!isMounted) return;
 
+        let activeImg = null;
         if (savedImg && savedImg.url) {
-          setRoomImage({
+          activeImg = {
             url: savedImg.url,
             name: savedImg.name || 'Restored Room Photo',
             isDemo: Boolean(savedImg.isDemo),
-          });
-        }
-
-        if (savedScene && Array.isArray(savedScene.placedItems)) {
-          setPlacedItems(savedScene.placedItems);
-        } else if (initialStagedProduct) {
-          // If launched from homepage with a specific piece
-          const initialItem = {
-            instanceId: `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-            productId: initialStagedProduct.id,
-            x: 50,
-            y: 65,
-            scale: 1.0,
-            rotation: 0,
-            zIndex: 1,
           };
-          setPlacedItems([initialItem]);
-          setSelectedId(initialItem.instanceId);
+          setRoomImage(activeImg);
+        } else if (initialStagedProduct) {
+          // If entering from homepage to stage a product and no custom photo was saved, default to sample room
+          activeImg = {
+            url: HERO_ROOM.image,
+            name: 'Sample Scandinavian Residence (Demo)',
+            type: 'image/jpeg',
+            size: null,
+            isDemo: true,
+          };
+          setRoomImage(activeImg);
+          saveRoomImageRecord(activeImg);
         }
 
+        let items = [];
+        if (savedScene && Array.isArray(savedScene.placedItems) && savedScene.placedItems.length > 0) {
+          items = savedScene.placedItems;
+        }
+
+        // If a specific product was requested for staging
+        if (initialStagedProduct) {
+          const existingItem = items.find((p) => p.productId === initialStagedProduct.id);
+          if (existingItem) {
+            setSelectedId(existingItem.instanceId);
+          } else {
+            const newItem = {
+              instanceId: `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              productId: initialStagedProduct.id,
+              x: 50,
+              y: 65,
+              scale: 1.0,
+              rotation: 0,
+              zIndex: items.length + 1,
+              useCutout: true,
+              customCutoutUrl: null,
+              lighting: {
+                brightness: 100,
+                contrast: 100,
+                warmth: 0,
+                shadowIntensity: 45,
+                shadowBlur: 14,
+                shadowOffsetY: 8,
+              },
+            };
+            items = [...items, newItem];
+            setSelectedId(newItem.instanceId);
+          }
+        }
+
+        setPlacedItems(items);
         setSaveStatus('saved');
       } catch (err) {
         console.error('Failed to load from storage:', err);
@@ -150,12 +183,22 @@ export default function RoomEditor({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      alert('Please upload a valid JPEG, PNG, or WebP photo.');
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const fileNameLower = file.name.toLowerCase();
+    const hasValidExt = validExtensions.some((ext) => fileNameLower.endsWith(ext));
+    const hasValidMime = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+
+    if (!hasValidExt && !hasValidMime) {
+      if (onShowToast) {
+        onShowToast('Please upload a valid JPEG, PNG, or WebP photo.');
+      }
       return;
     }
+
     if (file.size > 15 * 1024 * 1024) {
-      alert('File size exceeds 15 MB.');
+      if (onShowToast) {
+        onShowToast('File size exceeds 15 MB. Please choose a smaller photo.');
+      }
       return;
     }
 
@@ -164,10 +207,15 @@ export default function RoomEditor({
       handleRoomImageLoaded({
         url: ev.target.result,
         name: file.name,
-        type: file.type,
+        type: file.type || 'image/jpeg',
         size: file.size,
         isDemo: false,
       });
+    };
+    reader.onerror = () => {
+      if (onShowToast) {
+        onShowToast('Failed to read the image file. Please try another image.');
+      }
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -196,6 +244,16 @@ export default function RoomEditor({
       scale: 1.0,
       rotation: 0,
       zIndex: placedItems.length + 1,
+      useCutout: true,
+      customCutoutUrl: null,
+      lighting: {
+        brightness: 100,
+        contrast: 100,
+        warmth: 0,
+        shadowIntensity: 45,
+        shadowBlur: 14,
+        shadowOffsetY: 8,
+      },
     };
 
     setPlacedItems((prev) => [...prev, newItem]);
@@ -215,11 +273,11 @@ export default function RoomEditor({
 
   // Delete piece
   const handleDeleteItem = useCallback((instanceId) => {
-    setHistory((prevHistory) => [...prevHistory.slice(-25), JSON.parse(JSON.stringify(placedItems))]);
+    pushHistory(placedItems);
     setPlacedItems((prev) => prev.filter((item) => item.instanceId !== instanceId));
     setSelectedId((prev) => (prev === instanceId ? null : prev));
     if (onShowToast) onShowToast('Removed piece from room.');
-  }, [placedItems, onShowToast]);
+  }, [placedItems, pushHistory, onShowToast]);
 
   // Duplicate piece
   const handleDuplicateItem = (instanceId) => {
@@ -336,15 +394,15 @@ export default function RoomEditor({
             aria-label="Return to AURA Homepage"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Atelier</span>
+            <span className="hidden sm:inline">Back to Home</span>
           </button>
 
           <div className="border-l border-[#D8D2C8] pl-3 sm:pl-4">
-            <h1 className="font-serif text-lg sm:text-xl font-normal tracking-wide text-[#292923]">
+            <h1 className="font-serif text-lg sm:text-xl font-medium tracking-wide text-[#292923]">
               AURA Room Planner
             </h1>
-            <p className="text-[11px] uppercase tracking-widest text-[#4A463D] font-mono">
-              2D Spatial Staging
+            <p className="text-[11px] uppercase tracking-wider text-[#4A463D] font-mono">
+              2D Staging &amp; Lighting
             </p>
           </div>
         </div>
@@ -379,7 +437,7 @@ export default function RoomEditor({
             type="button"
             onClick={handleUndo}
             disabled={history.length === 0}
-            className={`min-h-[44px] px-3 py-2 text-xs uppercase tracking-wider font-medium border transition-colors flex items-center space-x-1.5 ${
+            className={`min-h-[44px] px-3.5 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium border transition-colors flex items-center space-x-1.5 ${
               history.length > 0
                 ? 'border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] cursor-pointer'
                 : 'border-[#D8D2C8]/50 bg-[#F5F1E9]/50 text-[#4A463D]/40 cursor-not-allowed'
@@ -387,7 +445,7 @@ export default function RoomEditor({
             title="Undo last change (Ctrl+Z)"
             aria-label="Undo last change"
           >
-            <Undo2 className="w-3.5 h-3.5" />
+            <Undo2 className="w-4 h-4" />
             <span className="hidden sm:inline">Undo</span>
           </button>
 
@@ -396,10 +454,10 @@ export default function RoomEditor({
             <button
               type="button"
               onClick={() => setResetConfirmOpen(true)}
-              className="min-h-[44px] px-3 py-2 text-xs uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] transition-colors cursor-pointer flex items-center space-x-1.5 focus-visible:outline-2 focus-visible:outline-[#62694A]"
+              className="min-h-[44px] px-3.5 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] transition-colors cursor-pointer flex items-center space-x-1.5 focus-visible:outline-2 focus-visible:outline-[#62694A]"
               title="Reset placed items"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-[#4A463D]" />
+              <RotateCcw className="w-4 h-4 text-[#4A463D]" />
               <span className="hidden sm:inline">Reset</span>
             </button>
           )}
@@ -409,10 +467,10 @@ export default function RoomEditor({
             <button
               type="button"
               onClick={() => replaceFileInputRef.current?.click()}
-              className="min-h-[44px] px-3 py-2 text-xs uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] transition-colors cursor-pointer hidden md:flex items-center space-x-1.5 focus-visible:outline-2 focus-visible:outline-[#62694A]"
+              className="min-h-[44px] px-3.5 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] transition-colors cursor-pointer hidden md:flex items-center space-x-1.5 focus-visible:outline-2 focus-visible:outline-[#62694A]"
               title="Replace current room photograph"
             >
-              <ImageIcon className="w-3.5 h-3.5 text-[#62694A]" />
+              <ImageIcon className="w-4 h-4 text-[#62694A]" />
               <span>Replace Photo</span>
             </button>
           )}
@@ -431,10 +489,10 @@ export default function RoomEditor({
           <button
             type="button"
             onClick={() => setNewDesignConfirmOpen(true)}
-            className="min-h-[44px] px-3 py-2 text-xs uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#FFFDFA] hover:bg-[#F5F1E9] text-[#4A463D] transition-colors cursor-pointer hidden lg:flex items-center space-x-1.5 focus-visible:outline-2 focus-visible:outline-[#62694A]"
+            className="min-h-[44px] px-3.5 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#FFFDFA] hover:bg-[#F5F1E9] text-[#4A463D] transition-colors cursor-pointer hidden lg:flex items-center space-x-1.5 focus-visible:outline-2 focus-visible:outline-[#62694A]"
             title="Start new room layout"
           >
-            <FilePlus className="w-3.5 h-3.5 text-[#4A463D]" />
+            <FilePlus className="w-4 h-4 text-[#4A463D]" />
             <span>New Design</span>
           </button>
 
@@ -464,26 +522,26 @@ export default function RoomEditor({
                 <div className="flex items-center space-x-2 truncate">
                   <span className="font-medium text-[#292923] truncate">{roomImage.name}</span>
                   {roomImage.isDemo && (
-                    <span className="px-1.5 py-0.2 bg-[#FFFDFA] border border-[#D8D2C8] text-[10px] font-mono text-[#62694A]">
+                    <span className="px-2 py-0.5 bg-[#FFFDFA] border border-[#D8D2C8] text-xs font-mono text-[#62694A]">
                       Demo Scene
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center space-x-3 shrink-0">
+                <div className="flex items-center space-x-4 shrink-0">
                   <button
                     type="button"
                     onClick={() => replaceFileInputRef.current?.click()}
-                    className="hover:text-[#62694A] underline cursor-pointer text-xs"
+                    className="hover:text-[#62694A] underline cursor-pointer text-xs sm:text-sm font-medium"
                   >
                     Change Photo
                   </button>
                   <button
                     type="button"
                     onClick={handleRemovePhoto}
-                    className="hover:text-[#7A271A] cursor-pointer text-xs flex items-center space-x-1"
+                    className="hover:text-[#7A271A] cursor-pointer text-xs sm:text-sm flex items-center space-x-1"
                   >
-                    <Trash2 className="w-3 h-3 text-[#7A271A]" />
+                    <Trash2 className="w-3.5 h-3.5 text-[#7A271A]" />
                     <span>Remove</span>
                   </button>
                 </div>
@@ -497,7 +555,7 @@ export default function RoomEditor({
                 onSelectItem={setSelectedId}
                 onUpdateItem={handleUpdateItem}
                 onDeleteItem={handleDeleteItem}
-                onRecordHistory={() => pushHistory(placedItems)}
+                onRecordHistory={(preDragSnapshot) => pushHistory(preDragSnapshot)}
               />
             </div>
 
@@ -542,14 +600,14 @@ export default function RoomEditor({
               <button
                 type="button"
                 onClick={() => setResetConfirmOpen(false)}
-                className="min-h-[44px] px-4 py-2 text-xs uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] cursor-pointer"
+                className="min-h-[44px] px-4 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReset}
-                className="min-h-[44px] px-5 py-2 text-xs uppercase tracking-wider font-medium bg-[#7A271A] hover:bg-[#5C1C13] text-[#FFFDFA] cursor-pointer"
+                className="min-h-[44px] px-5 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium bg-[#7A271A] hover:bg-[#5C1C13] text-[#FFFDFA] cursor-pointer"
               >
                 Yes, Reset Layout
               </button>
@@ -577,14 +635,14 @@ export default function RoomEditor({
               <button
                 type="button"
                 onClick={() => setNewDesignConfirmOpen(false)}
-                className="min-h-[44px] px-4 py-2 text-xs uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] cursor-pointer"
+                className="min-h-[44px] px-4 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium border border-[#D8D2C8] bg-[#F5F1E9] hover:bg-[#EAE5DC] text-[#292923] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmNewDesign}
-                className="min-h-[44px] px-5 py-2 text-xs uppercase tracking-wider font-medium bg-[#62694A] hover:bg-[#4B5237] text-[#FFFDFA] cursor-pointer"
+                className="min-h-[44px] px-5 py-2 text-xs sm:text-sm uppercase tracking-wider font-medium bg-[#62694A] hover:bg-[#4B5237] text-[#FFFDFA] cursor-pointer"
               >
                 Start New Design
               </button>

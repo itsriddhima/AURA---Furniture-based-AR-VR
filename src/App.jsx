@@ -59,12 +59,18 @@ function App() {
     if (currentView !== 'home') {
       setCurrentView('home');
       setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) element.scrollIntoView({ behavior: 'smooth' });
+        if (id) {
+          const element = document.getElementById(id);
+          if (element) element.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }, 50);
-    } else {
+    } else if (id) {
       const element = document.getElementById(id);
       if (element) element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 

@@ -24,10 +24,10 @@ export default function MeasurementVisualizer({ onSelectProduct }) {
           <div className="flex items-center space-x-3">
             <div className="w-3 h-3 rounded-full bg-[#62694A]"></div>
             <div>
-              <h2 className="text-sm sm:text-base uppercase tracking-wider font-medium text-[#292923]">
-                Sample Spatial Study &amp; Lighting Simulation
+              <h2 className="text-xs sm:text-sm uppercase tracking-wider font-semibold text-[#292923]">
+                Room Lighting &amp; Reference Proportions
               </h2>
-              <p className="text-xs sm:text-sm text-[#4A463D] mt-0.5">
+              <p className="text-xs text-[#4A463D] mt-0.5">
                 Archival Residence 04 · Stockholms län, Sweden (Demo Scene)
               </p>
             </div>

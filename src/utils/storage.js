@@ -5,9 +5,10 @@
  */
 
 const DB_NAME = 'aura_room_planner_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const SCENE_STORE = 'scenes';
 const IMAGE_STORE = 'room_images';
+const CUTOUT_STORE = 'cutout_cache';
 const ACTIVE_SCENE_KEY = 'active_scene';
 const ACTIVE_IMAGE_KEY = 'current_room_image';
 
@@ -18,20 +19,28 @@ function openDatabase() {
       return;
     }
 
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+    try {
+      const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(SCENE_STORE)) {
-        db.createObjectStore(SCENE_STORE, { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(IMAGE_STORE)) {
-        db.createObjectStore(IMAGE_STORE, { keyPath: 'id' });
-      }
-    };
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(SCENE_STORE)) {
+          db.createObjectStore(SCENE_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(IMAGE_STORE)) {
+          db.createObjectStore(IMAGE_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(CUTOUT_STORE)) {
+          db.createObjectStore(CUTOUT_STORE, { keyPath: 'key' });
+        }
+      };
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Failed to open IndexedDB'));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Failed to open IndexedDB'));
+      request.onblocked = () => reject(new Error('IndexedDB open blocked'));
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -52,6 +61,7 @@ export async function saveSceneData(sceneData) {
       const req = store.put(record);
       req.onsuccess = () => resolve(true);
       req.onerror = () => reject(req.error || new Error('Failed to save scene'));
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
     });
   } catch (err) {
     console.warn('AURA Storage: saveSceneData warning:', err);
@@ -71,6 +81,7 @@ export async function loadSceneData() {
       const req = store.get(ACTIVE_SCENE_KEY);
       req.onsuccess = () => resolve(req.result || null);
       req.onerror = () => resolve(null);
+      tx.onabort = () => resolve(null);
     });
   } catch (err) {
     console.warn('AURA Storage: loadSceneData warning:', err);
@@ -95,6 +106,7 @@ export async function saveRoomImageRecord(imageRecord) {
       const req = store.put(record);
       req.onsuccess = () => resolve(true);
       req.onerror = () => reject(req.error || new Error('Failed to save room image'));
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
     });
   } catch (err) {
     console.warn('AURA Storage: saveRoomImageRecord warning:', err);
@@ -114,6 +126,7 @@ export async function loadRoomImageRecord() {
       const req = store.get(ACTIVE_IMAGE_KEY);
       req.onsuccess = () => resolve(req.result || null);
       req.onerror = () => resolve(null);
+      tx.onabort = () => resolve(null);
     });
   } catch (err) {
     console.warn('AURA Storage: loadRoomImageRecord warning:', err);
@@ -133,9 +146,74 @@ export async function clearCurrentDesign() {
       tx.objectStore(IMAGE_STORE).delete(ACTIVE_IMAGE_KEY);
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
     });
   } catch (err) {
     console.warn('AURA Storage: clearCurrentDesign warning:', err);
+    return false;
+  }
+}
+
+/**
+ * Get cached cutout transparent image by key (e.g. productId or image URL)
+ */
+export async function getCachedCutout(key) {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve) => {
+      const tx = db.transaction(CUTOUT_STORE, 'readonly');
+      const store = tx.objectStore(CUTOUT_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result ? req.result.dataUrl : null);
+      req.onerror = () => resolve(null);
+      tx.onabort = () => resolve(null);
+    });
+  } catch (err) {
+    console.warn('AURA Storage: getCachedCutout warning:', err);
+    return null;
+  }
+}
+
+/**
+ * Save cached cutout transparent image dataUrl by key
+ */
+export async function saveCachedCutout(key, dataUrl) {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(CUTOUT_STORE, 'readwrite');
+      const store = tx.objectStore(CUTOUT_STORE);
+      const record = {
+        key,
+        dataUrl,
+        savedAt: Date.now(),
+      };
+      const req = store.put(record);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error || new Error('Failed to cache cutout'));
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+    });
+  } catch (err) {
+    console.warn('AURA Storage: saveCachedCutout warning:', err);
+    return false;
+  }
+}
+
+/**
+ * Clear cached cutouts
+ */
+export async function clearCutoutCache() {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve) => {
+      const tx = db.transaction(CUTOUT_STORE, 'readwrite');
+      tx.objectStore(CUTOUT_STORE).clear();
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
+    });
+  } catch (err) {
+    console.warn('AURA Storage: clearCutoutCache warning:', err);
     return false;
   }
 }
